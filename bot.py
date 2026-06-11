@@ -11,12 +11,12 @@ CHAT_ID = os.getenv("CHAT_ID")
 bot = telebot.TeleBot(TOKEN)
 
 STATE_FILE = "signals_state.json"
-STATE_VERSION = 2
+STATE_VERSION = 21
 
 ROUND_TRIP_FEE_PERCENT = 0.50
 MAX_OPEN_SIGNALS = 15
 MAX_NEW_SIGNALS_PER_SCAN = 3
-MIN_QUOTE_VOLUME_5H = 2_000_000
+MIN_QUOTE_VOLUME_5H = 1_000_000
 
 
 def load_state():
@@ -212,9 +212,9 @@ def analyze_pair(pair):
     long_condition = (
         ema20 > ema50 and
         last_close > ema20 and
-        50 <= rsi14 <= 62 and
+        45 <= rsi14 <= 66 and
         last_close > recent_high and
-        last_volume > avg_volume * 2.0
+        last_volume > avg_volume * 1.5
     )
 
     if long_condition:
@@ -237,7 +237,7 @@ def analyze_pair(pair):
             "ema50": ema50,
             "atr": atr14,
             "quote_volume_5h": quote_volume_5h,
-            "reason": "Strong trend + breakout + high volume + ATR stop",
+            "reason": "V2.1 trend + breakout + volume + ATR stop",
             "status": "OPEN",
             "created_at": int(time.time())
         }
@@ -245,9 +245,9 @@ def analyze_pair(pair):
     short_condition = (
         ema20 < ema50 and
         last_close < ema20 and
-        38 <= rsi14 <= 50 and
+        34 <= rsi14 <= 55 and
         last_close < recent_low and
-        last_volume > avg_volume * 2.0
+        last_volume > avg_volume * 1.5
     )
 
     if short_condition:
@@ -273,7 +273,7 @@ def analyze_pair(pair):
             "ema50": ema50,
             "atr": atr14,
             "quote_volume_5h": quote_volume_5h,
-            "reason": "Trend breakdown + high volume + ATR stop",
+            "reason": "V2.1 breakdown + volume + ATR stop",
             "status": "OPEN",
             "created_at": int(time.time())
         }
@@ -301,7 +301,7 @@ def send_new_signal(signal):
     tp1_percent = abs((signal["tp1"] - signal["entry"]) / signal["entry"]) * 100
     tp2_percent = abs((signal["tp2"] - signal["entry"]) / signal["entry"]) * 100
 
-    text = f"""🐃 BLACK BISON SIGNAL V2
+    text = f"""🐃 BLACK BISON SIGNAL V2.1
 
 {side_emoji} {pretty_pair} — {signal['side']}
 
@@ -387,7 +387,7 @@ def check_open_signals():
             state["closed_signals"].append(signal)
 
             if result == "STOP":
-                text = f"""🐃 BLACK BISON RESULT V2
+                text = f"""🐃 BLACK BISON RESULT V2.1
 
 ❌ {pretty_pair} — {side}
 
@@ -402,7 +402,7 @@ STOP LOSS HIT
 📊 Net Result: {net_percent:.2f}%
 """
             else:
-                text = f"""🐃 BLACK BISON RESULT V2
+                text = f"""🐃 BLACK BISON RESULT V2.1
 
 ✅ {pretty_pair} — {side}
 
@@ -452,7 +452,7 @@ def scan_market():
             time.sleep(0.35)
 
         if new_signals == 0:
-            print("No valid V2 setups found", flush=True)
+            print("No valid V2.1 setups found", flush=True)
 
     except Exception as e:
         print(f"Scanner error: {e}", flush=True)
@@ -473,7 +473,7 @@ def get_stats_text():
     total = len(closed)
 
     if total == 0:
-        return f"""📊 BLACK BISON STATS V2
+        return f"""📊 BLACK BISON STATS V2.1
 
 Closed Signals: 0
 Open Signals: {open_count}
@@ -488,19 +488,13 @@ No completed results yet.
     gross_total = sum(s.get("gross_percent", 0) for s in closed)
     net_total = sum(s.get("net_percent", 0) for s in closed)
 
-    avg_win = 0
-    avg_loss = 0
-
     win_values = [s.get("net_percent", 0) for s in closed if s["status"] in ["TP1", "TP2"]]
     loss_values = [s.get("net_percent", 0) for s in closed if s["status"] == "STOP"]
 
-    if win_values:
-        avg_win = sum(win_values) / len(win_values)
+    avg_win = sum(win_values) / len(win_values) if win_values else 0
+    avg_loss = sum(loss_values) / len(loss_values) if loss_values else 0
 
-    if loss_values:
-        avg_loss = sum(loss_values) / len(loss_values)
-
-    return f"""📊 BLACK BISON STATS V2
+    return f"""📊 BLACK BISON STATS V2.1
 
 Closed Signals: {total}
 Open Signals: {open_count}
@@ -521,7 +515,7 @@ Open Signals: {open_count}
 
 @bot.message_handler(commands=["start"])
 def start(message):
-    bot.reply_to(message, "Black Bison Signal Bot V2 is online 🚀")
+    bot.reply_to(message, "Black Bison Signal Bot V2.1 is online 🚀")
 
 
 @bot.message_handler(commands=["id"])
@@ -531,7 +525,7 @@ def get_id(message):
 
 @bot.message_handler(commands=["scan"])
 def manual_scan(message):
-    bot.reply_to(message, "Scanning Kraken with V2 rules...")
+    bot.reply_to(message, "Scanning Kraken with V2.1 rules...")
     check_open_signals()
     scan_market()
 
@@ -543,6 +537,6 @@ def stats(message):
 
 threading.Thread(target=scanner_loop, daemon=True).start()
 
-print("Black Bison Signal Bot V2 Started", flush=True)
+print("Black Bison Signal Bot V2.1 Started", flush=True)
 
 bot.infinity_polling()
