@@ -51,7 +51,8 @@ def send_scan():
         text = "🐃 BLACK BISON KRAKEN SCANNER\n\n"
 
         for pair, price, change, volume in signals:
-            text += f"📈 Pair: {pair}\n"
+    pretty_pair = pair.replace("USD", "/USD")
+    text += f"📈 Pair: {pretty_pair}\n"
             text += f"💰 Price: {price}\n"
             text += f"🔥 Change: +{change:.2f}%\n"
             text += f"📊 Volume: ${volume:,.0f}\n"
