@@ -48,20 +48,23 @@ def send_scan():
             print("No Kraken signals found", flush=True)
             return
 
-        text = "🐃 BLACK BISON KRAKEN SCANNER\n\n"
-
         for pair, price, change, volume in signals:
             pretty_pair = pair.replace("USD", "/USD")
-            text += f"📈 Pair: {pretty_pair}\n"
-            text += f"💰 Price: {price}\n"
-            text += f"🔥 Change: +{change:.2f}%\n"
-            text += f"📊 Volume: ${volume:,.0f}\n"
-            text += "⚠️ Watch only — not financial advice\n\n"
 
-        print(text, flush=True)
+    text = f"""🐃 BLACK BISON KRAKEN SCANNER
 
-        if CHAT_ID:
-            bot.send_message(CHAT_ID, text)
+📈 Pair: {pretty_pair}
+💰 Price: {price}
+🔥 Change: +{change:.2f}%
+📊 Volume: ${volume:,.0f}
+
+⚠️ Watch only — not financial advice
+"""
+
+    print(text, flush=True)
+
+    if CHAT_ID:
+        bot.send_message(CHAT_ID, text)
 
     except Exception as e:
         print(f"Scanner error: {e}", flush=True)
