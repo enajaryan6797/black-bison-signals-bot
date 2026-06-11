@@ -9,21 +9,31 @@ CHAT_ID = os.getenv("CHAT_ID")
 
 bot = telebot.TeleBot(TOKEN)
 
+
 def get_kraken_signals():
-    pairs_data = requests.get("https://api.kraken.com/0/public/AssetPairs", timeout=20).json()["result"]
+    pairs_data = requests.get(
+        "https://api.kraken.com/0/public/AssetPairs",
+        timeout=20
+    ).json()["result"]
 
     usd_pairs = []
+
     for pair_id, info in pairs_data.items():
         wsname = info.get("wsname", "")
         status = info.get("status", "")
+
         if wsname.endswith("/USD") and status == "online":
             usd_pairs.append(pair_id)
 
     signals = []
 
     for i in range(0, len(usd_pairs), 40):
-        chunk = ",".join(usd_pairs[i:i+40])
-        data = requests.get(f"https://api.kraken.com/0/public/Ticker?pair={chunk}", timeout=20).json()
+        chunk = ",".join(usd_pairs[i:i + 40])
+
+        data = requests.get(
+            f"https://api.kraken.com/0/public/Ticker?pair={chunk}",
+            timeout=20
+        ).json()
 
         for pair, t in data.get("result", {}).items():
             price = float(t["c"][0])
@@ -40,6 +50,7 @@ def get_kraken_signals():
     signals.sort(key=lambda x: x[2], reverse=True)
     return signals[:5]
 
+
 def send_scan():
     try:
         signals = get_kraken_signals()
@@ -51,7 +62,7 @@ def send_scan():
         for pair, price, change, volume in signals:
             pretty_pair = pair.replace("USD", "/USD")
 
-    text = f"""🐃 BLACK BISON KRAKEN SCANNER
+            text = f"""🐃 BLACK BISON KRAKEN SCANNER
 
 📈 Pair: {pretty_pair}
 💰 Price: {price}
@@ -61,33 +72,39 @@ def send_scan():
 ⚠️ Watch only — not financial advice
 """
 
-    print(text, flush=True)
+            print(text, flush=True)
 
-    if CHAT_ID:
-        bot.send_message(CHAT_ID, text)
+            if CHAT_ID:
+                bot.send_message(CHAT_ID, text)
 
     except Exception as e:
         print(f"Scanner error: {e}", flush=True)
+
 
 def scanner_loop():
     while True:
         send_scan()
         time.sleep(300)
 
+
 @bot.message_handler(commands=["start"])
 def start(message):
     bot.reply_to(message, "Black Bison Kraken Scanner is online 🚀")
 
+
 @bot.message_handler(commands=["id"])
 def get_id(message):
     bot.reply_to(message, f"Your chat ID is: {message.chat.id}")
+
 
 @bot.message_handler(commands=["scan"])
 def manual_scan(message):
     bot.reply_to(message, "Scanning Kraken now...")
     send_scan()
 
+
 threading.Thread(target=scanner_loop, daemon=True).start()
 
 print("Black Bison Kraken Scanner Started", flush=True)
+
 bot.infinity_polling()
